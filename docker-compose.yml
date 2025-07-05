@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  smoothy-server:
+    build: ./server
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./server/uploads:/usr/src/app/uploads
+      - ./server/outputs:/usr/src/app/outputs
+    environment:
+      - NODE_ENV=production
+      - CORS_ORIGIN=https://smoothy.mercerwest.com,https://mercerwest.com
+    restart: unless-stopped
+    networks:
+      - smoothy-network
+
+  smoothy-frontend:
+    build: .
+    ports:
+      - "80:80"
+    environment:
+      - VITE_SERVER_URL=http://smoothy-server:4000
+    depends_on:
+      - smoothy-server
+    restart: unless-stopped
+    networks:
+      - smoothy-network
+
+networks:
+  smoothy-network:
+    driver: bridge 

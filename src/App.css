@@ -1,0 +1,139 @@
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+body {
+  background: linear-gradient(180deg, #e0e0e0 0%, #b0b0b0 100%);
+  font-family: 'VT323', monospace, 'Courier New', Courier, monospace;
+  color: #222;
+  margin: 0;
+  padding: 0;
+}
+
+.ms-app-wrapper {
+  max-width: 520px;
+  margin: 40px auto;
+  background: #f4f4f4;
+  border: 2px solid #bbb;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px #8882;
+  padding: 2rem 1.5rem 1.5rem 1.5rem;
+  text-align: center;
+}
+
+.ms-title {
+  font-size: 2.2rem;
+  color: #444;
+  margin-bottom: 1.2rem;
+  letter-spacing: 2px;
+  text-shadow: 1px 1px 0 #fff, 2px 2px 0 #bbb;
+}
+
+.ms-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+
+.ms-label {
+  font-size: 1.1rem;
+  color: #666;
+  background: #eaeaea;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  display: inline-block;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.ms-label input[type="file"] {
+  display: none;
+}
+.ms-label:hover {
+  background: #d0d0ff;
+  color: #2a2a7a;
+}
+
+.ms-modes {
+  display: flex;
+  justify-content: center;
+  gap: 0.7rem;
+}
+.ms-mode-btn {
+  font-family: inherit;
+  font-size: 1rem;
+  background: #d8d8d8;
+  border: 1px solid #aaa;
+  border-radius: 3px;
+  color: #444;
+  padding: 0.4rem 1.1rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+}
+.ms-mode-btn.selected, .ms-mode-btn:hover {
+  background: #ff2a6d;
+  color: #fff;
+  border: 1px solid #b8003a;
+  box-shadow: 0 0 4px #ff2a6d55;
+}
+
+.ms-video-preview {
+  margin: 1.5rem 0 1rem 0;
+  min-height: 270px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eaeaea;
+  border: 1px solid #bbb;
+  border-radius: 6px;
+}
+.ms-video {
+  border-radius: 4px;
+  box-shadow: 0 2px 8px #8882;
+  background: #000;
+}
+.ms-placeholder {
+  color: #aaa;
+  font-size: 1.2rem;
+  padding: 2rem;
+}
+
+.ms-footer {
+  margin-top: 2rem;
+  font-size: 1rem;
+  color: #888;
+  border-top: 1px solid #ccc;
+  padding-top: 0.7rem;
+  letter-spacing: 1px;
+}
+
+.ms-progress-bar {
+  width: 100%;
+  max-width: 480px;
+  height: 16px;
+  background: #e0e0e0;
+  border: 1px solid #bbb;
+  border-radius: 8px;
+  margin: 0 auto 0.5rem auto;
+  overflow: hidden;
+}
+.ms-progress {
+  height: 100%;
+  background: linear-gradient(90deg, #ff2a6d 0%, #ffb347 100%);
+  transition: width 0.3s;
+}
+.ms-progress-label {
+  font-size: 1rem;
+  color: #444;
+  margin-bottom: 0.5rem;
+}
+.ms-error {
+  color: #fff;
+  background: #d32f2f;
+  border: 1px solid #b71c1c;
+  border-radius: 4px;
+  padding: 0.7rem 1rem;
+  margin: 1rem auto;
+  max-width: 480px;
+  font-size: 1.1rem;
+  font-family: inherit;
+}
