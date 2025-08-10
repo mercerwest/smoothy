@@ -101,38 +101,13 @@ app.post('/process', upload.single('video'), async (req, res) => {
 
     console.log(`Processing video: ${duration}s duration`);
 
-    // Enhanced smoothing effect with frame blending
-    const smoothingEffect = `vidstabdetect=shakiness=4:accuracy=15:result='${transFile}',` +
-      `vidstabtransform=smoothing=12:input='${transFile}',` +
-      `tblend=all_mode=average:all_opacity=0.4,` +
+    // Smoothing effect with frame blending only (no vidstab to avoid failures)
+    const smoothingEffect = `tblend=all_mode=average:all_opacity=0.4,` +
       `hqdn3d=1:1:2:1,` +
       `fade=t=in:st=0:d=0.2,` +
       `fade=t=out:st=${Math.max(0, duration - 0.2)}:d=0.2`;
 
-    // Pass 1: vidstabdetect
-    progressById.set(jobId, 10);
-    await new Promise((resolve, reject) => {
-      const detectTimeout = setTimeout(() => {
-        reject(new Error('vidstabdetect timeout'));
-      }, 120000);
-
-      ffmpeg(inputPath)
-        .videoFilters(`vidstabdetect=shakiness=4:accuracy=15:result='${transFile}'`)
-        .outputOptions(['-f null'])
-        .on('start', cmd => console.log('ffmpeg vidstabdetect:', cmd))
-        .on('end', () => {
-          clearTimeout(detectTimeout);
-          progressById.set(jobId, 30);
-          resolve();
-        })
-        .on('error', (err) => {
-          clearTimeout(detectTimeout);
-          reject(err);
-        })
-        .save('/dev/null');
-    });
-
-    // Pass 2: Apply smoothing effect with progress tracking
+    // Single pass: Apply smoothing effect with progress tracking
     await new Promise((resolve, reject) => {
       const processTimeout = setTimeout(() => {
         reject(new Error('processing timeout'));
@@ -150,11 +125,11 @@ app.post('/process', upload.single('video'), async (req, res) => {
         ])
         .on('start', (cmd) => {
           console.log('ffmpeg smoothing effect started:', cmd);
-          progressById.set(jobId, 40);
+          progressById.set(jobId, 20);
         })
         .on('progress', (progress) => {
           if (progress.percent) {
-            const percent = Math.min(95, 40 + Math.floor(progress.percent * 0.55));
+            const percent = Math.min(95, 20 + Math.floor(progress.percent * 0.75));
             progressById.set(jobId, percent);
             console.log(`Processing: ${percent}%`);
           }
