@@ -1,8 +1,8 @@
 import { useState, useRef } from 'react'
 import './App.css'
 
-// Get server URL from environment or default to localhost
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://smoothy-server:4000';
+// Get server URL from environment or default to same domain
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || window.location.origin;
 
 function App() {
   const [videoFile, setVideoFile] = useState(null);
