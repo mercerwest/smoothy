@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import './App.css'
 
 // Get server URL from environment or default to localhost
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://3.141.15.189:4000';
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://3.131.97.110:4001';
 
 function App() {
   const [videoFile, setVideoFile] = useState(null);

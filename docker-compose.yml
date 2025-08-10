@@ -4,7 +4,7 @@ services:
   smoothy-server:
     build: ./server
     ports:
-      - "4000:4000"
+      - "4001:4000"
     volumes:
       - ./server/uploads:/usr/src/app/uploads
       - ./server/outputs:/usr/src/app/outputs
@@ -19,11 +19,11 @@ services:
     build:
       context: .
       args:
-        VITE_SERVER_URL: http://3.141.15.189:4000
+        VITE_SERVER_URL: http://3.131.97.110:4001
     ports:
-      - "80:80"
+      - "3000:80"
     environment:
-      - VITE_SERVER_URL=http://3.141.15.189:4000
+      - VITE_SERVER_URL=http://3.131.97.110:4001
     depends_on:
       - smoothy-server
     restart: unless-stopped
