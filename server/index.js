@@ -86,34 +86,11 @@ app.post('/process', upload.single('video'), async (req, res) => {
 
     console.log(`Processing video: ${duration}s duration`);
 
-    // Minimal smoothing effect - only the most reliable effects
-    const smoothingEffect = `vidstabdetect=shakiness=3:accuracy=15:result='${transFile}',` +
-      `vidstabtransform=smoothing=10:input='${transFile}',` +
-      `fade=t=in:st=0:d=0.2,` +
+    // Basic video processing - no complex filters to ensure compatibility
+    const basicEffect = `fade=t=in:st=0:d=0.2,` +
       `fade=t=out:st=${Math.max(0, duration - 0.2)}:d=0.2`;
 
-    // Pass 1: vidstabdetect with timeout
-    await new Promise((resolve, reject) => {
-      const detectTimeout = setTimeout(() => {
-        reject(new Error('vidstabdetect timeout'));
-      }, 120000); // 2 minutes for detection
-
-      ffmpeg(inputPath)
-        .videoFilters(`vidstabdetect=shakiness=3:accuracy=15:result='${transFile}'`)
-        .outputOptions(['-f null'])
-        .on('start', cmd => console.log('ffmpeg vidstabdetect:', cmd))
-        .on('end', () => {
-          clearTimeout(detectTimeout);
-          resolve();
-        })
-        .on('error', (err) => {
-          clearTimeout(detectTimeout);
-          reject(err);
-        })
-        .save('/dev/null');
-    });
-
-    // Pass 2: Apply smoothing effect with timeout and better progress tracking
+    // Single pass: Apply basic effect
     await new Promise((resolve, reject) => {
       const processTimeout = setTimeout(() => {
         reject(new Error('processing timeout'));
@@ -122,7 +99,7 @@ app.post('/process', upload.single('video'), async (req, res) => {
       let progressCounter = 0;
 
       ffmpeg(inputPath)
-        .videoFilters(smoothingEffect)
+        .videoFilters(basicEffect)
         .outputOptions([
           '-c:v libvpx',
           '-b:v 1.2M', // Slightly reduced bitrate for better performance
@@ -132,7 +109,7 @@ app.post('/process', upload.single('video'), async (req, res) => {
           '-cpu-used 2' // Faster encoding
         ])
         .on('start', (cmd) => {
-          console.log('ffmpeg smoothing effect started:', cmd);
+          console.log('ffmpeg basic processing started:', cmd);
         })
         .on('progress', (progress) => {
           progressCounter++;
