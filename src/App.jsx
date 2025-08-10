@@ -99,7 +99,7 @@ function App() {
           onClick={handleProcess}
           disabled={!videoFile || processing}
         >
-          {processing ? 'Processing...' : 'Apply Jelly Effect'}
+          {processing ? 'Processing...' : 'Make it Smooth'}
         </button>
         {outputURL && (
           <button className="ms-mode-btn" onClick={handleDownload} style={{ marginLeft: 12 }}>

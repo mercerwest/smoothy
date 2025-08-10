@@ -35,7 +35,7 @@ app.get('/', (req, res) => {
   res.send('SMOOTHY server running');
 });
 
-// Video processing endpoint with unified jelly effect
+// Video processing endpoint with improved smoothing effects
 app.post('/process', upload.single('video'), async (req, res) => {
   if (!req.file) {
     return res.status(400).send('No video file uploaded');
@@ -86,15 +86,16 @@ app.post('/process', upload.single('video'), async (req, res) => {
 
     console.log(`Processing video: ${duration}s duration`);
 
-    // Optimized jelly effect filter chain for longer videos
-    const jellyEffect = `vidstabdetect=shakiness=8:accuracy=15:result='${transFile}',` +
-      `vidstabtransform=smoothing=25:input='${transFile}',` +
-      `tblend=all_mode=average:all_opacity=0.3,` +
-      `hqdn3d=3:2:4:3,` +
-      `eq=contrast=1.1:brightness=0.03:saturation=1.05:gamma=1.03,` +
-      `unsharp=3:3:1.0:3:3:0.5,` +
-      `fade=t=in:st=0:d=0.3,` +
-      `fade=t=out:st=${Math.max(0, duration - 0.3)}:d=0.3`;
+    // Improved smoothing effect filter chain with better blurring
+    const smoothingEffect = `vidstabdetect=shakiness=6:accuracy=15:result='${transFile}',` +
+      `vidstabtransform=smoothing=20:input='${transFile}',` +
+      `tblend=all_mode=average:all_opacity=0.4,` +
+      `tblend=all_mode=difference:all_opacity=0.2,` +
+      `hqdn3d=2:1:3:2,` +
+      `eq=contrast=1.05:brightness=0.02:saturation=1.02:gamma=1.02,` +
+      `unsharp=3:3:0.8:3:3:0.4,` +
+      `fade=t=in:st=0:d=0.2,` +
+      `fade=t=out:st=${Math.max(0, duration - 0.2)}:d=0.2`;
 
     // Pass 1: vidstabdetect with timeout
     await new Promise((resolve, reject) => {
@@ -103,7 +104,7 @@ app.post('/process', upload.single('video'), async (req, res) => {
       }, 120000); // 2 minutes for detection
 
       ffmpeg(inputPath)
-        .videoFilters(`vidstabdetect=shakiness=8:accuracy=15:result='${transFile}'`)
+        .videoFilters(`vidstabdetect=shakiness=6:accuracy=15:result='${transFile}'`)
         .outputOptions(['-f null'])
         .on('start', cmd => console.log('ffmpeg vidstabdetect:', cmd))
         .on('end', () => {
@@ -117,27 +118,34 @@ app.post('/process', upload.single('video'), async (req, res) => {
         .save('/dev/null');
     });
 
-    // Pass 2: Apply jelly effect with timeout
+    // Pass 2: Apply smoothing effect with timeout and better progress tracking
     await new Promise((resolve, reject) => {
       const processTimeout = setTimeout(() => {
         reject(new Error('processing timeout'));
       }, 180000); // 3 minutes for processing
 
+      let progressCounter = 0;
+
       ffmpeg(inputPath)
-        .videoFilters(jellyEffect)
+        .videoFilters(smoothingEffect)
         .outputOptions([
           '-c:v libvpx',
-          '-b:v 1.5M', // Reduced bitrate for better performance
+          '-b:v 1.2M', // Slightly reduced bitrate for better performance
           '-c:a libvorbis',
           '-auto-alt-ref 0',
           '-deadline good', // Faster encoding
           '-cpu-used 2' // Faster encoding
         ])
         .on('start', (cmd) => {
-          console.log('ffmpeg jelly effect started:', cmd);
+          console.log('ffmpeg smoothing effect started:', cmd);
         })
         .on('progress', (progress) => {
+          progressCounter++;
           console.log('ffmpeg progress:', progress);
+          // Log progress every 10 frames to avoid spam
+          if (progressCounter % 10 === 0) {
+            console.log(`Processing frame: ${progress.frames || 0}, time: ${progress.timemark || 'unknown'}`);
+          }
         })
         .on('end', () => {
           clearTimeout(processTimeout);

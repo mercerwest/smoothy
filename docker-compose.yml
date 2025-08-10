@@ -16,7 +16,10 @@ services:
       - smoothy-network
 
   smoothy-frontend:
-    build: .
+    build:
+      context: .
+      args:
+        VITE_SERVER_URL: http://3.141.15.189:4000
     ports:
       - "80:80"
     environment:
