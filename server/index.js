@@ -86,11 +86,8 @@ app.post('/process', upload.single('video'), async (req, res) => {
 
     console.log(`Processing video: ${duration}s duration`);
 
-    // Basic video processing - no complex filters to ensure compatibility
-    const basicEffect = `fade=t=in:st=0:d=0.2,` +
-      `fade=t=out:st=${Math.max(0, duration - 0.2)}:d=0.2`;
-
-    // Single pass: Apply basic effect
+    // No filters - just basic video conversion to test FFmpeg
+    // Single pass: Basic conversion only
     await new Promise((resolve, reject) => {
       const processTimeout = setTimeout(() => {
         reject(new Error('processing timeout'));
@@ -99,22 +96,20 @@ app.post('/process', upload.single('video'), async (req, res) => {
       let progressCounter = 0;
 
       ffmpeg(inputPath)
-        .videoFilters(basicEffect)
         .outputOptions([
           '-c:v libvpx',
-          '-b:v 1.2M', // Slightly reduced bitrate for better performance
+          '-b:v 1.2M',
           '-c:a libvorbis',
           '-auto-alt-ref 0',
-          '-deadline good', // Faster encoding
-          '-cpu-used 2' // Faster encoding
+          '-deadline good',
+          '-cpu-used 2'
         ])
         .on('start', (cmd) => {
-          console.log('ffmpeg basic processing started:', cmd);
+          console.log('ffmpeg basic conversion started:', cmd);
         })
         .on('progress', (progress) => {
           progressCounter++;
           console.log('ffmpeg progress:', progress);
-          // Log progress every 10 frames to avoid spam
           if (progressCounter % 10 === 0) {
             console.log(`Processing frame: ${progress.frames || 0}, time: ${progress.timemark || 'unknown'}`);
           }
