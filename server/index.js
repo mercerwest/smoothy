@@ -10,6 +10,9 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 
 const app = express();
 
+// Store progress for each job
+const progressById = new Map();
+
 // Configure multer with file size limits
 const upload = multer({ 
   dest: 'uploads/',
@@ -35,6 +38,13 @@ app.get('/', (req, res) => {
   res.send('SMOOTHY server running');
 });
 
+// Progress endpoint
+app.get('/progress/:id', (req, res) => {
+  const id = req.params.id;
+  const progress = progressById.get(id) || 0;
+  res.json({ progress });
+});
+
 // Video processing endpoint with improved smoothing effects
 app.post('/process', upload.single('video'), async (req, res) => {
   if (!req.file) {
@@ -45,6 +55,10 @@ app.post('/process', upload.single('video'), async (req, res) => {
   const outputName = `output_${Date.now()}.webm`;
   const outputPath = path.join('outputs', outputName);
   const transFile = inputPath + '.trf';
+  const jobId = String(Date.now());
+
+  // Initialize progress
+  progressById.set(jobId, 0);
 
   // Ensure outputs dir exists
   fs.mkdirSync('outputs', { recursive: true });
@@ -58,6 +72,7 @@ app.post('/process', upload.single('video'), async (req, res) => {
         console.log('Cleanup error for', f, ':', e.message);
       }
     });
+    progressById.delete(jobId);
   };
 
   // Set a timeout for the entire request
@@ -86,16 +101,45 @@ app.post('/process', upload.single('video'), async (req, res) => {
 
     console.log(`Processing video: ${duration}s duration`);
 
-    // No filters - just basic video conversion to test FFmpeg
-    // Single pass: Basic conversion only
+    // Enhanced smoothing effect with frame blending
+    const smoothingEffect = `vidstabdetect=shakiness=4:accuracy=15:result='${transFile}',` +
+      `vidstabtransform=smoothing=12:input='${transFile}',` +
+      `tblend=all_mode=average:all_opacity=0.4,` +
+      `hqdn3d=1:1:2:1,` +
+      `fade=t=in:st=0:d=0.2,` +
+      `fade=t=out:st=${Math.max(0, duration - 0.2)}:d=0.2`;
+
+    // Pass 1: vidstabdetect
+    progressById.set(jobId, 10);
+    await new Promise((resolve, reject) => {
+      const detectTimeout = setTimeout(() => {
+        reject(new Error('vidstabdetect timeout'));
+      }, 120000);
+
+      ffmpeg(inputPath)
+        .videoFilters(`vidstabdetect=shakiness=4:accuracy=15:result='${transFile}'`)
+        .outputOptions(['-f null'])
+        .on('start', cmd => console.log('ffmpeg vidstabdetect:', cmd))
+        .on('end', () => {
+          clearTimeout(detectTimeout);
+          progressById.set(jobId, 30);
+          resolve();
+        })
+        .on('error', (err) => {
+          clearTimeout(detectTimeout);
+          reject(err);
+        })
+        .save('/dev/null');
+    });
+
+    // Pass 2: Apply smoothing effect with progress tracking
     await new Promise((resolve, reject) => {
       const processTimeout = setTimeout(() => {
         reject(new Error('processing timeout'));
-      }, 180000); // 3 minutes for processing
-
-      let progressCounter = 0;
+      }, 180000);
 
       ffmpeg(inputPath)
+        .videoFilters(smoothingEffect)
         .outputOptions([
           '-c:v libvpx',
           '-b:v 1.2M',
@@ -105,18 +149,20 @@ app.post('/process', upload.single('video'), async (req, res) => {
           '-cpu-used 2'
         ])
         .on('start', (cmd) => {
-          console.log('ffmpeg basic conversion started:', cmd);
+          console.log('ffmpeg smoothing effect started:', cmd);
+          progressById.set(jobId, 40);
         })
         .on('progress', (progress) => {
-          progressCounter++;
-          console.log('ffmpeg progress:', progress);
-          if (progressCounter % 10 === 0) {
-            console.log(`Processing frame: ${progress.frames || 0}, time: ${progress.timemark || 'unknown'}`);
+          if (progress.percent) {
+            const percent = Math.min(95, 40 + Math.floor(progress.percent * 0.55));
+            progressById.set(jobId, percent);
+            console.log(`Processing: ${percent}%`);
           }
         })
         .on('end', () => {
           clearTimeout(processTimeout);
           clearTimeout(timeout);
+          progressById.set(jobId, 100);
           console.log('ffmpeg finished:', outputPath);
           res.download(outputPath, outputName, (err) => {
             if (err) console.log('Download error:', err.message);

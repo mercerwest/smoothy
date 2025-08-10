@@ -24,30 +24,48 @@ function App() {
     }
   };
 
-  // Server-side processing: upload video for jelly effect processing
+  // Server-side processing: upload video for smoothing processing
   const handleProcess = async () => {
     if (!videoFile) return;
     setProcessing(true);
     setProgress(0);
     setOutputURL('');
     setError('');
+    
+    const jobId = Date.now();
+    let progressInterval;
+    
     try {
       const formData = new FormData();
       formData.append('video', videoFile);
-      // Use fetch with progress (XHR for progress, fallback to fetch)
+      
+      // Start progress polling
+      progressInterval = setInterval(async () => {
+        try {
+          const response = await fetch(`${SERVER_URL}/progress/${jobId}`);
+          if (response.ok) {
+            const data = await response.json();
+            setProgress(data.progress);
+          }
+        } catch (err) {
+          console.log('Progress poll error:', err);
+        }
+      }, 500);
+
+      // Upload and process video
       const xhr = new XMLHttpRequest();
       xhr.open('POST', `${SERVER_URL}/process`, true);
       xhr.responseType = 'blob';
+      
       xhr.upload.onprogress = (e) => {
         if (e.lengthComputable) {
-          setProgress(Math.round((e.loaded / e.total) * 50));
+          const uploadProgress = Math.round((e.loaded / e.total) * 10); // Upload is 10% of total
+          setProgress(uploadProgress);
         }
       };
-      xhr.onreadystatechange = () => {
-        if (xhr.readyState === 2) setProgress(60); // headers received
-        if (xhr.readyState === 3) setProgress(80); // loading
-      };
+      
       xhr.onload = () => {
+        clearInterval(progressInterval);
         if (xhr.status === 200) {
           setProgress(100);
           const outBlob = xhr.response;
@@ -57,12 +75,16 @@ function App() {
         }
         setProcessing(false);
       };
+      
       xhr.onerror = () => {
+        clearInterval(progressInterval);
         setError('Processing failed: Network error');
         setProcessing(false);
       };
+      
       xhr.send(formData);
     } catch (err) {
+      clearInterval(progressInterval);
       setError('Processing failed: ' + (err.message || err));
       setProcessing(false);
     }
