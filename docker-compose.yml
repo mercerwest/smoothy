@@ -19,11 +19,11 @@ services:
     build:
       context: .
       args:
-        VITE_SERVER_URL: http://3.131.97.110:4001
+        VITE_SERVER_URL: http://smoothy-server:4000
     ports:
       - "3000:80"
     environment:
-      - VITE_SERVER_URL=http://3.131.97.110:4001
+      - VITE_SERVER_URL=http://smoothy-server:4000
     depends_on:
       - smoothy-server
     restart: unless-stopped
