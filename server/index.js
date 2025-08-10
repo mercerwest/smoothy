@@ -86,11 +86,9 @@ app.post('/process', upload.single('video'), async (req, res) => {
 
     console.log(`Processing video: ${duration}s duration`);
 
-    // Simplified smoothing effect filter chain - only compatible effects
-    const smoothingEffect = `vidstabdetect=shakiness=5:accuracy=15:result='${transFile}',` +
-      `vidstabtransform=smoothing=15:input='${transFile}',` +
-      `tblend=all_mode=average:all_opacity=0.3,` +
-      `hqdn3d=1:1:2:1,` +
+    // Minimal smoothing effect - only the most reliable effects
+    const smoothingEffect = `vidstabdetect=shakiness=3:accuracy=15:result='${transFile}',` +
+      `vidstabtransform=smoothing=10:input='${transFile}',` +
       `fade=t=in:st=0:d=0.2,` +
       `fade=t=out:st=${Math.max(0, duration - 0.2)}:d=0.2`;
 
@@ -101,7 +99,7 @@ app.post('/process', upload.single('video'), async (req, res) => {
       }, 120000); // 2 minutes for detection
 
       ffmpeg(inputPath)
-        .videoFilters(`vidstabdetect=shakiness=5:accuracy=15:result='${transFile}'`)
+        .videoFilters(`vidstabdetect=shakiness=3:accuracy=15:result='${transFile}'`)
         .outputOptions(['-f null'])
         .on('start', cmd => console.log('ffmpeg vidstabdetect:', cmd))
         .on('end', () => {
