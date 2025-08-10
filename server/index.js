@@ -101,13 +101,12 @@ app.post('/process', upload.single('video'), async (req, res) => {
 
     console.log(`Processing video: ${duration}s duration`);
 
-    // Smoothing effect with frame blending only (no vidstab to avoid failures)
-    const smoothingEffect = `tblend=all_mode=average:all_opacity=0.4,` +
-      `hqdn3d=1:1:2:1,` +
-      `fade=t=in:st=0:d=0.2,` +
-      `fade=t=out:st=${Math.max(0, duration - 0.2)}:d=0.2`;
+    // Very subtle smoothing effect - preserve quality and colors
+    const smoothingEffect = `tblend=all_mode=average:all_opacity=0.15,` +
+      `fade=t=in:st=0:d=0.1,` +
+      `fade=t=out:st=${Math.max(0, duration - 0.1)}:d=0.1`;
 
-    // Single pass: Apply smoothing effect with progress tracking
+    // Single pass: Apply subtle smoothing with progress tracking
     await new Promise((resolve, reject) => {
       const processTimeout = setTimeout(() => {
         reject(new Error('processing timeout'));
@@ -117,14 +116,15 @@ app.post('/process', upload.single('video'), async (req, res) => {
         .videoFilters(smoothingEffect)
         .outputOptions([
           '-c:v libvpx',
-          '-b:v 1.2M',
+          '-b:v 2M', // Higher bitrate to preserve quality
+          '-crf 20', // Better quality setting
           '-c:a libvorbis',
           '-auto-alt-ref 0',
           '-deadline good',
-          '-cpu-used 2'
+          '-cpu-used 1' // Better quality encoding
         ])
         .on('start', (cmd) => {
-          console.log('ffmpeg smoothing effect started:', cmd);
+          console.log('ffmpeg subtle smoothing started:', cmd);
           progressById.set(jobId, 20);
         })
         .on('progress', (progress) => {
