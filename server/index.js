@@ -86,14 +86,11 @@ app.post('/process', upload.single('video'), async (req, res) => {
 
     console.log(`Processing video: ${duration}s duration`);
 
-    // Improved smoothing effect filter chain with better blurring
-    const smoothingEffect = `vidstabdetect=shakiness=6:accuracy=15:result='${transFile}',` +
-      `vidstabtransform=smoothing=20:input='${transFile}',` +
-      `tblend=all_mode=average:all_opacity=0.4,` +
-      `tblend=all_mode=difference:all_opacity=0.2,` +
-      `hqdn3d=2:1:3:2,` +
-      `eq=contrast=1.05:brightness=0.02:saturation=1.02:gamma=1.02,` +
-      `unsharp=3:3:0.8:3:3:0.4,` +
+    // Simplified smoothing effect filter chain - only compatible effects
+    const smoothingEffect = `vidstabdetect=shakiness=5:accuracy=15:result='${transFile}',` +
+      `vidstabtransform=smoothing=15:input='${transFile}',` +
+      `tblend=all_mode=average:all_opacity=0.3,` +
+      `hqdn3d=1:1:2:1,` +
       `fade=t=in:st=0:d=0.2,` +
       `fade=t=out:st=${Math.max(0, duration - 0.2)}:d=0.2`;
 
@@ -104,7 +101,7 @@ app.post('/process', upload.single('video'), async (req, res) => {
       }, 120000); // 2 minutes for detection
 
       ffmpeg(inputPath)
-        .videoFilters(`vidstabdetect=shakiness=6:accuracy=15:result='${transFile}'`)
+        .videoFilters(`vidstabdetect=shakiness=5:accuracy=15:result='${transFile}'`)
         .outputOptions(['-f null'])
         .on('start', cmd => console.log('ffmpeg vidstabdetect:', cmd))
         .on('end', () => {
